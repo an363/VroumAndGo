@@ -20,7 +20,7 @@ public class Player: MonoBehaviour
 	public string File_Summary;
 	public string File_saving;
 	
-	public float gap=-1.0f; // car_length + gap is the inverse density
+	public float density=-1.0f; // car_length + gap is the inverse density
 	public float delay=-1.0f;
 	public float noise=-1.0f;
 	
@@ -38,6 +38,7 @@ public class Player: MonoBehaviour
 		//Debug.Log("Summary: " + File_Summary);
 
 		this.SelectCase();
+		this.ReadParameters();
 		
 		// check if myFile.txt file is created at the specified path 
 		if (File.Exists(File_Summary))
@@ -122,19 +123,23 @@ public class Player: MonoBehaviour
 	string  text= File.ReadAllText (CasePath);
 	string[] lines = text.Split(new string[] { "\n" }, StringSplitOptions.None);
 	
-		try
+	try
 		{
-		string[] fields = lines[1].Split(new string[] { "=" }, StringSplitOptions.None);
-		gap= float.Parse(fields[1], CultureInfo.InvariantCulture);
+		string[] fields = lines[0].Split(new string[] { "=" }, StringSplitOptions.None);
+		this.density= float.Parse(fields[1], CultureInfo.InvariantCulture);
+		fields = lines[1].Split(new string[] { "=" }, StringSplitOptions.None);
+		this.delay= float.Parse(fields[1], CultureInfo.InvariantCulture);
 		fields = lines[2].Split(new string[] { "=" }, StringSplitOptions.None);
-		delay= float.Parse(fields[1], CultureInfo.InvariantCulture);
-		fields = lines[3].Split(new string[] { "=" }, StringSplitOptions.None);
-		noise= float.Parse(fields[1], CultureInfo.InvariantCulture);
+		this.noise= float.Parse(fields[1], CultureInfo.InvariantCulture);
+		
+		//Debug.Log(string.Format("Density is {0}", density));
+		//Debug.Log(string.Format("Delay is {0}", delay));
+		//Debug.Log(string.Format("Noise is {0}", noise));
 		}
-		catch (IOException e)
+	catch (Exception e)
 		{
-		    Console.WriteLine("The config file " + Char.ToString(getCaseLabel()) +".txt could not be read.");
-		    Console.WriteLine(e.Message);
+		Console.WriteLine("The config file " + Char.ToString(getCaseLabel()) +".txt could not be read.");
+		Console.WriteLine(e.Message);
 		}		
 			
 	}
