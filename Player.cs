@@ -1,9 +1,11 @@
 // This is intended to be a public class. One public instance of it is stored in CarController, to give the specifics of the player (the ID, the test case, etc.)
 using System;
 using System.IO;
-using System.Globalization;
 using UnityEngine;
+using System.Globalization;
+
 public class Player: MonoBehaviour
+
 // constructs Player
 // selects Case
 // at the end of the run, call Player.ValidateRun()
@@ -19,12 +21,11 @@ public class Player: MonoBehaviour
 	public string Folder_Cases;
 	public string File_Summary;
 	public string File_saving;
-	
+		
 	public float density=-1.0f; // car_length + gap is the inverse density
 	public float delay=-1.0f;
 	public float noise=-1.0f;
-	
-		
+
 	void Start()
 	// this initializes the player, with their ID and attributes
 	{
@@ -125,25 +126,24 @@ public class Player: MonoBehaviour
 	
 	try
 		{
+
+
+
 		string[] fields = lines[0].Split(new string[] { "=" }, StringSplitOptions.None);
+		
 		this.density= float.Parse(fields[1], CultureInfo.InvariantCulture);
 		fields = lines[1].Split(new string[] { "=" }, StringSplitOptions.None);
 		this.delay= float.Parse(fields[1], CultureInfo.InvariantCulture);
 		fields = lines[2].Split(new string[] { "=" }, StringSplitOptions.None);
-		this.noise= float.Parse(fields[1], CultureInfo.InvariantCulture);
-		
-		//Debug.Log(string.Format("Density is {0}", density));
-		//Debug.Log(string.Format("Delay is {0}", delay));
-		//Debug.Log(string.Format("Noise is {0}", noise));
+		this.noise= float.Parse(fields[1], CultureInfo.InvariantCulture);		
 		}
 	catch (Exception e)
 		{
 		Console.WriteLine("The config file " + Char.ToString(getCaseLabel()) +".txt could not be read.");
 		Console.WriteLine(e.Message);
 		}		
-			
 	}
-	
+
 	public void ValidateRun(float ratioTooClose, float ratioTooFar)
 	{
 		//if (true) // if the run was valid
