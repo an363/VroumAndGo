@@ -480,6 +480,7 @@ public class CarController : MonoBehaviour
         bool isdelay = true;
         float t0 = 0;
         int idx_5second = 0;
+        int idx_delay = 0;
         float t, x, y, v, acc, brake, theta;
         using (StreamWriter writer = new StreamWriter(path))
         {
@@ -490,7 +491,8 @@ public class CarController : MonoBehaviour
                 {
                     t0 = timeHistory[i];
                     isdelay = false;
-                    idx_5second = i;
+                    idx_delay = i;
+		    idx_5second = i;
 
                 }
                 if (!isdelay)
@@ -498,13 +500,13 @@ public class CarController : MonoBehaviour
                     if (timeHistory[i] - t0 < T_CONSTANT)
                     {
                         t = timeHistory[i] - t0;
-                        x = xHistory[idx_5second] + (timeHistory[i] - t0) * 30f/3.6f;
+                        x = xHistory[idx_delay] + (timeHistory[i] - t0) * 30f/3.6f;
                         y = 0f;
                         v = 30f/3.6f;
                         acc = 0f;
                         brake = 0f;
                         theta = 0f;
-                        idx_5second++;
+		    	idx_5second++;
                     }
                     else
                     {
@@ -513,7 +515,7 @@ public class CarController : MonoBehaviour
 
 
                         //Debug.Log(i+" "+ idx_5second+ " "+ xHistory[i]+ xHistory[idx_5second-1]);
-                        x = xHistory[i] + T_CONSTANT * 30f/3.6f;
+                        x = xHistory[idx_delay] + xHistory[i] - xHistory[idx_5second] + T_CONSTANT * 30f/3.6f ;
                         y = yHistory[i];
                         v = speedHistory[i];
                         acc = acceleratorPedal[i];
