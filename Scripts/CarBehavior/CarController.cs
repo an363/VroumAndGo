@@ -498,7 +498,7 @@ public class CarController : MonoBehaviour
                     if (timeHistory[i] - t0 < T_CONSTANT)
                     {
                         t = timeHistory[i] - t0;
-                        x = xHistory[0] + (timeHistory[i] - t0) * 30f/3.6f;
+                        x = xHistory[idx_5second] + (timeHistory[i] - t0) * 30f/3.6f;
                         y = 0f;
                         v = 30f/3.6f;
                         acc = 0f;
@@ -513,7 +513,7 @@ public class CarController : MonoBehaviour
 
 
                         //Debug.Log(i+" "+ idx_5second+ " "+ xHistory[i]+ xHistory[idx_5second-1]);
-                        x = xHistory[0] + xHistory[i] - xHistory[idx_5second] + T_CONSTANT * 30f/3.6f;
+                        x = xHistory[i] + T_CONSTANT * 30f/3.6f;
                         y = yHistory[i];
                         v = speedHistory[i];
                         acc = acceleratorPedal[i];
