@@ -69,13 +69,93 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        float input;
+        //float accelerationInput = Input.GetAxis("Vertical"); 
+        //float brakeInput = Input.GetAxis("Jump"); 
 
-        float accelerationInput = Input.GetAxis("Vertical"); 
-        float brakeInput = Input.GetAxis("Jump"); 
+	float accelerationInput = Input.GetAxis("Vertical6");
+//        if (accelerationInput == 0f)
+//            accelerationInput = -1f;
+//            else accelerationInput = Mathf.InverseLerp(0.5f, 1f, accelerationInput);
+        //accelerationInput = (accelerationInput + 1f) * 0.5f;
+        //accelerationInput = Mathf.InverseLerp(0f, 1f, accelerationInput);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+        float brakeInput = Input.GetAxis("Jump");
 
-        acceleratorPedal[cptHistory] = Mathf.Clamp((accelerationInput), 0.0f, 1.0f); // Clamp the
-        brakePedal[cptHistory] = Mathf.Clamp((brakeInput), 0.0f, 1.0f);//Mathf.Clamp(Input.GetAxis("Jump"), 0.0f, 1.0f);// Convert.ToSingle(Input.GetButton("Jump")); // value between 0 and 1 (space bar on the keyboard)
+        Debug.Log("Acceleration pedal: "+accelerationInput);
+
+        acceleratorPedal[cptHistory] = accelerationInput;
+
+
+
+
+
+
+/*
+// List all axis names as defined in Edit > Project Settings > Input Manager
+   string[] axisNames = {
+        "Horizontal",
+        "Vertical",
+        "Jump",
+        "VerticalY","Vertical3","Vertical4","Vertical5","Vertical6","Vertical7","Vertical8","Vertical9","Vertical10",
+        "Vertical11",
+        "Vertical12",
+        "Vertical13",
+        "Vertical14",
+        "Vertical15",
+        "Vertical16",
+        "Vertical17",
+        "Vertical18",
+        "Vertical19",
+        "Vertical20","Vertical21","Vertical22","Vertical23","Vertical24","Vertical26","Vertical27","Vertical28",
+        // Add any custom axes you have defined
+    };
+
+	foreach (string axis in axisNames)
+        {
+            float value = Input.GetAxis(axis);
+            if (Mathf.Abs(value) > 0.0001f) // Use a small threshold for floating point precision
+            {
+                Debug.Log($"{axis}: {value}");
+            }
+        }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //acceleratorPedal[cptHistory] = Mathf.Clamp((accelerationInput), 0.0f, 1.0f); // Clamp the
+        brakePedal[cptHistory] = Mathf.Clamp((brakeInput), 0.0f, 1.0f);//Mathf.Clamp(Input.GetAxis("Jump"), 0.0f, 1.0f);//  		Convert.ToSingle(Input.GetButton("Jump")); // value between 0 and 1 (space bar on the keyboard)
         turnInput = Input.GetAxis("Horizontal"); // Left/Right arrow keys
         minTimeStep = Math.Min(Time.deltaTime, minTimeStep);
         timeHistory[cptHistory] = Time.time;
@@ -169,13 +249,34 @@ public class CarController : MonoBehaviour
     public bool IS_NOISE_REMOVED = true;
 
     // Physical constants
+    //public const float CAR_LENGTH = 4.0f; // length of the car (m)
+    //public const float MASS = 1000.0f; // mass of the car (kg)
+    //public const float AIR_DENSITY = 1.2f; // air density (kg/m^3)
+    //public const float CROSS_SECTIONAL_AREA = 2.5f; // cross-sectional area of the car (m^2)
+    //public const float DRAG_COEFFICIENT = 0.3f; // drag coefficient of the car
+    //public const float GRAVITY = 9.81f; // acceleration due to gravity (m/s^2)
+    //public const float ROLLING_RESISTANCE = 0.2f; // rolling resistance coefficient
+    
+    
     public const float CAR_LENGTH = 4.0f; // length of the car (m)
-    public const float MASS = 1000.0f; // mass of the car (kg)
-    public const float AIR_DENSITY = 1.2f; // air density (kg/m^3)
-    public const float CROSS_SECTIONAL_AREA = 2.5f; // cross-sectional area of the car (m^2)
-    public const float DRAG_COEFFICIENT = 0.3f; // drag coefficient of the car
+    public const float MASS = 1140.0f; // mass of the car (kg)
+    public const float a_p = 5.8f;
+    public const float a_b = 10.0f;
+
     public const float GRAVITY = 9.81f; // acceleration due to gravity (m/s^2)
-    public const float ROLLING_RESISTANCE = 0.2f; // rolling resistance coefficient
+    public const float ROLLING_RESISTANCE = 0.012f; // rolling resistance coefficient
+    public const float INTERNAL_FRICTION = 50.0f;
+    public const float DRAG_COEFFICIENT = 210f; // drag coefficient
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     // Constants for simulation configuration
     public const float sigmoid_threshold = 0.1f; // threshold for the sigmoid function
@@ -215,16 +316,23 @@ public class CarController : MonoBehaviour
         float deterministicForces = DeterministicForces(acceleratorPedal[cptHistory_delayed], brakePedal[cptHistory_delayed], GetCurrentSpeed());
         float currentTimeStep = ComputeCurrentTimeStep();
 
-        float newSpeed = Convert.ToSingle(GetCurrentSpeed() + currentTimeStep * deterministicForces / MASS + Math.Sqrt(currentTimeStep) * StochasticForce(GetCurrentSpeed())); // amplitude StochasticForce can be 0
+        float newSpeed = Convert.ToSingle(GetCurrentSpeed() + currentTimeStep * deterministicForces / MASS + Math.Sqrt(currentTimeStep) * StochasticForce(GetCurrentSpeed()));
         newSpeed = Convert.ToSingle(Math.Max(0.0, newSpeed));
 
+        // Removal of the noise
+        speedHistory[cptHistory] = newSpeed; 
+        // Save the new speed in the history so that it can be used for noise reduction
+
         int durationSteps = TimeToSteps(DURATION);
-        if (IS_NOISE_REMOVED && cptHistory >= durationSteps)
+
+        if (IS_NOISE_REMOVED && cptHistory_delayed >= durationSteps)
         {
-            Span<float> speedHistoryCut = speedHistory.AsSpan(Math.Max(0, cptHistory - durationSteps), durationSteps + 1); // speedHistory[0:cptHistory_updated+1], the last element is not included
+            Span<float> speedHistoryCut = speedHistory.AsSpan(Math.Max(0, cptHistory_delayed - durationSteps), durationSteps + 1);
             newSpeed = ReduceNoise(speedHistoryCut.ToArray());
+
             return Math.Max(0.0f, newSpeed);
         }
+        // If the noise reduction is not applied, return the new speed
         return Math.Max(0.0f, newSpeed);
     }
 
@@ -247,21 +355,55 @@ public class CarController : MonoBehaviour
         return Math.Min(delaySteps, cptHistory);
     }
 
+
+
+
+
+
+
+
+
+
+
     // Converts pedal inputs into desired acceleration // http://docenti.ing.unipi.it/guiggiani-m/Michelin_Tire_Rolling_Resistance.pdf
+   // public float DeterministicForces(float acceleratorPedalValue, float brakePedalValue, float speed)
+   // {
+    //    float tractionForce = MASS * 5.0f * acceleratorPedalValue;
+      //  float brakeForce = -MASS * 8.7f * brakePedalValue;
+        //float dragAirForce =  Convert.ToSingle(-0.5f * AIR_DENSITY * DRAG_COEFFICIENT * CROSS_SECTIONAL_AREA * Math.Pow(speed, 2));
+        //float weightForce = MASS * GRAVITY;
+       // float rollingResistanceForce = 0.0f; // contact tyre on ground (and internal drag not put)
+
+        //if (speed > 0.0f)
+        //rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
+
+        //return tractionForce + brakeForce + dragAirForce + rollingResistanceForce;
+   // }
+   
+   
+   
+   // Converts pedal inputs into desired acceleration // http://docenti.ing.unipi.it/guiggiani-m/Michelin_Tire_Rolling_Resistance.pdf
     public float DeterministicForces(float acceleratorPedalValue, float brakePedalValue, float speed)
     {
-        float tractionForce = MASS * 10.0f * acceleratorPedalValue; // 3.57 for a Twingo
-        float brakeForce = -MASS * 20.0f * brakePedalValue;
-        float dragAirForce = Convert.ToSingle(-0.5f * AIR_DENSITY * DRAG_COEFFICIENT * CROSS_SECTIONAL_AREA * Math.Pow(speed, 2));
+        float tractionForce = MASS * a_p * acceleratorPedalValue;
+        float brakeForce = -MASS * a_b * brakePedalValue;
+        float dragAirForce = - DRAG_COEFFICIENT * speed ;
         float weightForce = MASS * GRAVITY;
         float rollingResistanceForce = 0.0f; // contact tyre on ground (and internal drag not put)
-        if (speed > 0.0f)
-        {
-            rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
-        }
+        float internalFrictionForce = 0.0f;
 
-        return tractionForce + brakeForce + dragAirForce + rollingResistanceForce;
+        if (speed > 0.0f)
+            rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
+            internalFrictionForce = -INTERNAL_FRICTION;
+
+        return tractionForce + brakeForce + dragAirForce + rollingResistanceForce + internalFrictionForce;
     }
+
+
+
+
+
+
 
     // Generates random noise uniformly distributed in [-NoiseAmplitude, NoiseAmplitude]
     public float StochasticForce(float speed)
@@ -274,44 +416,52 @@ public class CarController : MonoBehaviour
     public float IntegrateTrap(float[] signal, float[] timeSteps)
     {
         float integral = 0.0f;
+
         for (int i = 0; i < signal.Length - 1; i++)
         {
-            integral += (signal[i] + signal[i + 1]) * timeSteps[signal.Length - (i + 1)] / 2.0f; // Trapezoidal rule
+            integral += (signal[i] + signal[i + 1]) * timeSteps[i + 1] / 2.0f;  // Trapezoidal rule
         }
+
         return integral;
     }
-
 
     public float ComputeNewSpeedNegativeDelay()
     {
         int delaySteps = TimeToSteps(player.delay);
+		int time_t = cptHistory;
+		int time_tmDt = Math.Max(0, cptHistory - 1);
 
-        float acceleratorPedal_tmDt = acceleratorPedal[Math.Max(0, cptHistory - 1)];
-        float acceleratorPedal_t = acceleratorPedal[cptHistory];
-        float brake_pedal_tmDt = brakePedal[Math.Max(0, cptHistory - 1)];
-        float brake_pedal_t = brakePedal[cptHistory];
+        float acceleratorPedal_tmDt = acceleratorPedal[time_tmDt];
+        float acceleratorPedal_t = acceleratorPedal[time_t];
+        float brake_pedal_tmDt = brakePedal[time_tmDt];
+        float brake_pedal_t = brakePedal[time_t];
+
+        if (acceleratorPedal_tmDt > acceleratorPedal_t)
+            acceleratorPedal_tmDt = acceleratorPedal_t;
+        if (brake_pedal_tmDt > brake_pedal_t)
+            brake_pedal_tmDt = brake_pedal_t;
 
         float deterministicForces_t = DeterministicForces(acceleratorPedal_t, brake_pedal_t, GetCurrentSpeed());
 
         float[] predictedForces = new float[delaySteps];
         float[] timeStepsIntegral = new float[delaySteps];
+
         // loop over delay steps
         for (int i = 0; i < delaySteps; i++)
         {
-            float predictedForces_tmDt = DeterministicForces(acceleratorPedal_tmDt, brake_pedal_tmDt, speedHistory[Math.Max(0, cptHistory - (i + 1))]);
-            float predictedForces_t = DeterministicForces(acceleratorPedal_t, brake_pedal_t, speedHistory[Math.Max(0, cptHistory - i)]);
+            float predictedForces_tmDt = DeterministicForces(acceleratorPedal_tmDt, brake_pedal_tmDt, speedHistory[Math.Max(0, time_tmDt - i)]);
+            float predictedForces_t =  DeterministicForces(acceleratorPedal_t, brake_pedal_t, speedHistory[Math.Max(0, time_t - i)]);
             predictedForces[i] = predictedForces_t - predictedForces_tmDt;
-            timeStepsIntegral[i] = timeHistory[Math.Max(0, cptHistory - i)] - timeHistory[Math.Max(0, cptHistory - i - 1)];
+            timeStepsIntegral[i] = Math.Abs(timeHistory[Math.Max(0, time_t - i)] - timeHistory[Math.Max(0, time_tmDt - i)]);
         }
+
         // integral of the predicted forces over the delay
         float integralPredictedForces = IntegrateTrap(predictedForces, timeStepsIntegral);
         float currentTimeStep = ComputeCurrentTimeStep();
-        float newSpeed = Convert.ToSingle(GetCurrentSpeed() + currentTimeStep * deterministicForces_t / MASS + integralPredictedForces / MASS + Math.Sqrt(currentTimeStep) * StochasticForce(currentSpeed) / MASS);
-        newSpeed = Math.Max(0.0f, newSpeed);
+        float newSpeed = Convert.ToSingle(GetCurrentSpeed() + currentTimeStep * deterministicForces_t / MASS + integralPredictedForces / MASS + Math.Sqrt(currentTimeStep) * StochasticForce(currentSpeed));
 
         return Math.Max(0.0f, newSpeed);
     }
-
 
     // Reduce noise from the signal using a low-pass Butterworth filter zero phase shift
     public float ReduceNoise(float[] signal)
@@ -468,6 +618,7 @@ public class CarController : MonoBehaviour
         bool isdelay = true;
         float t0 = 0;
         int idx_5second = 0;
+        int idx_delay = 0;
         float t, x, y, v, acc, brake, theta;
         using (StreamWriter writer = new StreamWriter(path))
         {
@@ -478,7 +629,8 @@ public class CarController : MonoBehaviour
                 {
                     t0 = timeHistory[i];
                     isdelay = false;
-                    idx_5second = i;
+                    idx_delay = i;
+		    idx_5second = i;
 
                 }
                 if (!isdelay)
@@ -486,13 +638,13 @@ public class CarController : MonoBehaviour
                     if (timeHistory[i] - t0 < T_CONSTANT)
                     {
                         t = timeHistory[i] - t0;
-                        x = (timeHistory[i] - t0) * 30f/3.6f;
+                        x = xHistory[idx_delay] + (timeHistory[i] - t0) * 30f/3.6f;
                         y = 0f;
                         v = 30f/3.6f;
                         acc = 0f;
                         brake = 0f;
                         theta = 0f;
-                        idx_5second++;
+		    	idx_5second++;
                     }
                     else
                     {
@@ -501,7 +653,7 @@ public class CarController : MonoBehaviour
 
 
                         //Debug.Log(i+" "+ idx_5second+ " "+ xHistory[i]+ xHistory[idx_5second-1]);
-                        x = xHistory[i] - xHistory[idx_5second] + T_CONSTANT * 30f/3.6f;
+                        x = xHistory[idx_delay] + xHistory[i] - xHistory[idx_5second] + T_CONSTANT * 30f/3.6f ;
                         y = yHistory[i];
                         v = speedHistory[i];
                         acc = acceleratorPedal[i];
@@ -580,5 +732,30 @@ public class CarController : MonoBehaviour
         double exponent = -alpha * (v - sigmoid_threshold);
         return 1.0 / (1.0 + Math.Exp(Math.Min(limSup, exponent)));
     }
-}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
+}
