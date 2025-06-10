@@ -69,11 +69,93 @@ public class CarController : MonoBehaviour
 
     private void Update()
     {
-        float accelerationInput = Input.GetAxis("Vertical"); 
-        float brakeInput = Input.GetAxis("Jump"); 
+        //float accelerationInput = Input.GetAxis("Vertical"); 
+        //float brakeInput = Input.GetAxis("Jump"); 
 
-        acceleratorPedal[cptHistory] = Mathf.Clamp((accelerationInput), 0.0f, 1.0f); // Clamp the
-        brakePedal[cptHistory] = Mathf.Clamp((brakeInput), 0.0f, 1.0f);//Mathf.Clamp(Input.GetAxis("Jump"), 0.0f, 1.0f);// Convert.ToSingle(Input.GetButton("Jump")); // value between 0 and 1 (space bar on the keyboard)
+	float accelerationInput = Input.GetAxis("Vertical6");
+//        if (accelerationInput == 0f)
+//            accelerationInput = -1f;
+//            else accelerationInput = Mathf.InverseLerp(0.5f, 1f, accelerationInput);
+        //accelerationInput = (accelerationInput + 1f) * 0.5f;
+        //accelerationInput = Mathf.InverseLerp(0f, 1f, accelerationInput);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+        float brakeInput = Input.GetAxis("Jump");
+
+        Debug.Log("Acceleration pedal: "+accelerationInput);
+
+        acceleratorPedal[cptHistory] = accelerationInput;
+
+
+
+
+
+
+/*
+// List all axis names as defined in Edit > Project Settings > Input Manager
+   string[] axisNames = {
+        "Horizontal",
+        "Vertical",
+        "Jump",
+        "VerticalY","Vertical3","Vertical4","Vertical5","Vertical6","Vertical7","Vertical8","Vertical9","Vertical10",
+        "Vertical11",
+        "Vertical12",
+        "Vertical13",
+        "Vertical14",
+        "Vertical15",
+        "Vertical16",
+        "Vertical17",
+        "Vertical18",
+        "Vertical19",
+        "Vertical20","Vertical21","Vertical22","Vertical23","Vertical24","Vertical26","Vertical27","Vertical28",
+        // Add any custom axes you have defined
+    };
+
+	foreach (string axis in axisNames)
+        {
+            float value = Input.GetAxis(axis);
+            if (Mathf.Abs(value) > 0.0001f) // Use a small threshold for floating point precision
+            {
+                Debug.Log($"{axis}: {value}");
+            }
+        }*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //acceleratorPedal[cptHistory] = Mathf.Clamp((accelerationInput), 0.0f, 1.0f); // Clamp the
+        brakePedal[cptHistory] = Mathf.Clamp((brakeInput), 0.0f, 1.0f);//Mathf.Clamp(Input.GetAxis("Jump"), 0.0f, 1.0f);//  		Convert.ToSingle(Input.GetButton("Jump")); // value between 0 and 1 (space bar on the keyboard)
         turnInput = Input.GetAxis("Horizontal"); // Left/Right arrow keys
         minTimeStep = Math.Min(Time.deltaTime, minTimeStep);
         timeHistory[cptHistory] = Time.time;
@@ -167,13 +249,34 @@ public class CarController : MonoBehaviour
     public bool IS_NOISE_REMOVED = true;
 
     // Physical constants
+    //public const float CAR_LENGTH = 4.0f; // length of the car (m)
+    //public const float MASS = 1000.0f; // mass of the car (kg)
+    //public const float AIR_DENSITY = 1.2f; // air density (kg/m^3)
+    //public const float CROSS_SECTIONAL_AREA = 2.5f; // cross-sectional area of the car (m^2)
+    //public const float DRAG_COEFFICIENT = 0.3f; // drag coefficient of the car
+    //public const float GRAVITY = 9.81f; // acceleration due to gravity (m/s^2)
+    //public const float ROLLING_RESISTANCE = 0.2f; // rolling resistance coefficient
+    
+    
     public const float CAR_LENGTH = 4.0f; // length of the car (m)
-    public const float MASS = 1000.0f; // mass of the car (kg)
-    public const float AIR_DENSITY = 1.2f; // air density (kg/m^3)
-    public const float CROSS_SECTIONAL_AREA = 2.5f; // cross-sectional area of the car (m^2)
-    public const float DRAG_COEFFICIENT = 0.3f; // drag coefficient of the car
+    public const float MASS = 1140.0f; // mass of the car (kg)
+    public const float a_p = 5.8f;
+    public const float a_b = 10.0f;
+
     public const float GRAVITY = 9.81f; // acceleration due to gravity (m/s^2)
-    public const float ROLLING_RESISTANCE = 0.2f; // rolling resistance coefficient
+    public const float ROLLING_RESISTANCE = 0.012f; // rolling resistance coefficient
+    public const float INTERNAL_FRICTION = 50.0f;
+    public const float DRAG_COEFFICIENT = 210f; // drag coefficient
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     // Constants for simulation configuration
     public const float sigmoid_threshold = 0.1f; // threshold for the sigmoid function
@@ -252,20 +355,55 @@ public class CarController : MonoBehaviour
         return Math.Min(delaySteps, cptHistory);
     }
 
+
+
+
+
+
+
+
+
+
+
     // Converts pedal inputs into desired acceleration // http://docenti.ing.unipi.it/guiggiani-m/Michelin_Tire_Rolling_Resistance.pdf
+   // public float DeterministicForces(float acceleratorPedalValue, float brakePedalValue, float speed)
+   // {
+    //    float tractionForce = MASS * 5.0f * acceleratorPedalValue;
+      //  float brakeForce = -MASS * 8.7f * brakePedalValue;
+        //float dragAirForce =  Convert.ToSingle(-0.5f * AIR_DENSITY * DRAG_COEFFICIENT * CROSS_SECTIONAL_AREA * Math.Pow(speed, 2));
+        //float weightForce = MASS * GRAVITY;
+       // float rollingResistanceForce = 0.0f; // contact tyre on ground (and internal drag not put)
+
+        //if (speed > 0.0f)
+        //rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
+
+        //return tractionForce + brakeForce + dragAirForce + rollingResistanceForce;
+   // }
+   
+   
+   
+   // Converts pedal inputs into desired acceleration // http://docenti.ing.unipi.it/guiggiani-m/Michelin_Tire_Rolling_Resistance.pdf
     public float DeterministicForces(float acceleratorPedalValue, float brakePedalValue, float speed)
     {
-        float tractionForce = MASS * 5.0f * acceleratorPedalValue;
-        float brakeForce = -MASS * 8.7f * brakePedalValue;
-        float dragAirForce =  Convert.ToSingle(-0.5f * AIR_DENSITY * DRAG_COEFFICIENT * CROSS_SECTIONAL_AREA * Math.Pow(speed, 2));
+        float tractionForce = MASS * a_p * acceleratorPedalValue;
+        float brakeForce = -MASS * a_b * brakePedalValue;
+        float dragAirForce = - DRAG_COEFFICIENT * speed ;
         float weightForce = MASS * GRAVITY;
         float rollingResistanceForce = 0.0f; // contact tyre on ground (and internal drag not put)
+        float internalFrictionForce = 0.0f;
 
         if (speed > 0.0f)
-        rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
+            rollingResistanceForce = -ROLLING_RESISTANCE * weightForce;
+            internalFrictionForce = -INTERNAL_FRICTION;
 
-        return tractionForce + brakeForce + dragAirForce + rollingResistanceForce;
+        return tractionForce + brakeForce + dragAirForce + rollingResistanceForce + internalFrictionForce;
     }
+
+
+
+
+
+
 
     // Generates random noise uniformly distributed in [-NoiseAmplitude, NoiseAmplitude]
     public float StochasticForce(float speed)
@@ -594,5 +732,31 @@ public class CarController : MonoBehaviour
         double exponent = -alpha * (v - sigmoid_threshold);
         return 1.0 / (1.0 + Math.Exp(Math.Min(limSup, exponent)));
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
 }
 
