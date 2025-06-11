@@ -18,7 +18,7 @@ public class StartScene : MonoBehaviour
 
     void Start()
     {
-    
+    Time.timeScale = 1f;
     StartCoroutine(StartSequence());
     }
     
@@ -60,4 +60,3 @@ public class StartScene : MonoBehaviour
     
 
 }
-
