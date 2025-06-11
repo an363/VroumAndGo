@@ -31,7 +31,7 @@ public class CarInFront : MonoBehaviour
 
     // Store if the reaction test is playing (1) or the real experiment (0)
     public int TestReactionTime = 1;
-    private float StartTime = 0;
+    private float StartTime;
 
     // Maximal time length of the experiment
     private float Tmax = 120f;
@@ -40,6 +40,8 @@ public class CarInFront : MonoBehaviour
 
     void Start()
     {
+    	Time.timeScale = 1f;
+    	StartTime = Time.time;
         Player = PlayerCar.GetComponent<Player>();       
         // Load the delay test trajectory for the car in front
         ReadDataFromTestAsset(first_run_delay, times, zValues, xValues, orientationValues);
@@ -49,15 +51,15 @@ public class CarInFront : MonoBehaviour
     {
         currentTime = Time.time - StartTime;
         // Find the index of the load text that corresponds to the real time
-        while (currentIndex < times.Count && times[currentIndex] <= currentTime)
+        while (currentIndex < times.Count-1 && times[currentIndex] <= currentTime)
         {
             ++currentIndex;
         }
         
         // Check if we reach the end of the loaded trajectory or if we reach the maximal time of simulation
         // to load the next trajectory or save the data and close the app
-        if (currentIndex >= times.Count || (TestReactionTime == 0 && (currentTime > Tmax || currentIndex >= times.Count)))
-        {
+        if (currentIndex >= times.Count-1 || (TestReactionTime == 0 && (currentTime > Tmax || currentIndex >= times.Count-1)))
+        {//11062025, I modify the above line so the car does not have to reach the end of the road to popup the error, this is to ensure the game remains open for the next experimentor.
             // The loaded trajectory was the reaction time test
             if (TestReactionTime ==1)
             {
@@ -88,17 +90,20 @@ public class CarInFront : MonoBehaviour
                 currentTime = Time.time - StartTime;
                 
                 }
-            // It was the actual experiment and we save (and/or validate) the data 
+            // It was the actual experiment and we save (and/or validate) the data
             else
             {
                 PlayerCar.GetComponent<CarController>().SaveTrajectory(Player.File_saving);
                 float ratioTooClose = PlayerCar.GetComponent<CarController>().ratioTooClose;
                 float ratioTooFar = PlayerCar.GetComponent<CarController>().ratioTooFar;
                 Player.ValidateRun(ratioTooClose, ratioTooFar);
+                GameMenu menu = FindObjectOfType<GameMenu>();
                 #if UNITY_EDITOR
-                                UnityEditor.EditorApplication.isPlaying = false;
+                                //UnityEditor.EditorApplication.isPlaying = false;
+                                menu.PauseGame();
                 #else
-                                Application.Quit();
+                                //Application.Quit();
+                                menu.PauseGame();
                 #endif
             }
         }
